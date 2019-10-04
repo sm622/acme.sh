@@ -906,12 +906,9 @@ _json_encode() {
   echo "$_j_str" | _hex_dump | _lower_case | sed 's/0a/5c 6e/g' | tr -d ' ' | _h2b | tr -d "\r\n"
 }
 
-#from: http:\/\/  to http://
+#convert '\/' to '\'
 _json_decode() {
-  _j_str="$(sed 's#\\/#/#g')"
-  _debug3 "_json_decode"
-  _debug3 "_j_str" "$_j_str"
-  echo "$_j_str"
+  sed 's#\\/#/#g'
 }
 
 #options file
@@ -2635,12 +2632,8 @@ _initAPI() {
   _api_server="${1:-$ACME_DIRECTORY}"
   _debug "_init api for server: $_api_server"
 
-  MAX_API_RETRY_TIMES=10
-  _sleep_retry_sec=10
-  _request_retry_times=0
-  while [ -z "$ACME_NEW_ACCOUNT" ] && [ "${_request_retry_times}" -lt "$MAX_API_RETRY_TIMES" ]; do
-    _request_retry_times=$(_math "$_request_retry_times" + 1)
-    response=$(_get "$_api_server")
+  if [ -z "$ACME_NEW_ACCOUNT" ]; then
+    response=$(_get "$_api_server" | _json_decode)
     if [ "$?" != "0" ]; then
       _debug2 "response" "$response"
       _info "Can not init api for: $_api_server."
